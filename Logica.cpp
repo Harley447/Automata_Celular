@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include "Entidades.h"
 using namespace std;
 
 int main ()
@@ -27,7 +28,26 @@ int main ()
     {
         for (int j = 1; j <= N; j++)
         {
-            Mundo[i * (N + 2) + j] = rand() % 3;
+            //Mundo[i * (N + 2) + j] = rand() % 3;
+//            int random=rand()%3;
+//            if(random==2){
+//            	Predator pred;
+//            	Mundo[i * (N + 2) + j] =pred.getName();
+//        	}
+//            if(random==1){
+//            	Prey prey;
+//            	Mundo[i * (N + 2) + j] =prey.getName();
+//       		 }
+//            if(random==0){
+//            	Mundo[i * (N + 2) + j] =0;
+//			}
+			if(i==2 && j==2){
+				Prey prey;
+            	Mundo[i * (N + 2) + j] =prey.getName();
+			}
+            else{
+            	Mundo[i * (N + 2) + j] =0;
+			}
         }
     }
 
@@ -56,10 +76,14 @@ int main ()
             for (int j = 1; j <= N; j++)
             {
                 int posicionActual = i * (N + 2) + j;
+                
 
                 int animal = Mundo[posicionActual];
-
-
+	
+				//Instanciar Creature existente en la posición actual, creature.move()
+				// Para obtener que hay en la celda hace falta arreglar Location, que le da
+				// Coordenadas a todas los animales
+				
                 if (animal == 1 || animal == 2)
                 {
                     // Arreglos para almacenar
