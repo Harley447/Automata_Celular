@@ -5,11 +5,13 @@
 
 class Cell {
   public:
-  	bool alive;
     virtual ~Cell() {}
+    virtual bool canBreed() {
+      return false;
+    };
 
     virtual bool step() {
-      return 0;
+      return false;
     };
  
     virtual int getName() {
@@ -21,12 +23,11 @@ class Prey: public Cell {
   public:
     const int umbralBreeding=3;
   	const int maxAge=30;
-  	const int maxChildren=4;
+  	//const int maxChildren=4;
     int age;
 
   	Prey(){ //Necesita la ubicacion en la grilla
   		age = 0;
-      alive = true;
 	  }
 
   	bool increaseAge(){
@@ -60,11 +61,10 @@ class Predator: public Cell {
   	const int maxChildren = 2;
     const int startEnergy = 4;
     int age;
-    int energy;
+    int energy;    
 
     Predator(){ //Necesita la ubicacion en la grilla
   		age = 0;
-      alive = true;
       energy = startEnergy;
 	  }
 
@@ -104,6 +104,8 @@ class Grid {
     int M, N;
     Cell** matrix;
   public:
+    int totalPrey = 0; int totalPredator = 0;
+
     Grid(int width = 10, int height = 10) {
       M = width;
       N = height;
@@ -116,9 +118,11 @@ class Grid {
             break;
           case 1:
             matrix[i] = new Prey();
+            totalPrey++;
             break;
           default:
             matrix[i] = new Predator();
+            totalPredator++;
             break;
         }
       }
@@ -130,9 +134,15 @@ class Grid {
         delete matrix[i];
       }
       delete[] matrix;
+      totalPrey = 0;
+      totalPredator = 0;
     }
 
     void print() {
+      std::cout << "Total depredadores:" << totalPredator << std::endl;
+      std::cout << "Total presas:" << totalPrey << std::endl;
+
+
       for (int i = 0; i < M; i++) {
         for (int j = 0; j < N; j++) {
           std::cout << matrix[i*N+j]->getName();
@@ -143,51 +153,137 @@ class Grid {
 
     // Se hizo secuencial para evitar definir normas extra :c
     void step() {
-      int** matrixChecked = new Bool*[M*N]
+      bool* matrixChecked = new bool[M*N]();
       for (int i = 0; i < M; i++) {
-        for (int j =0; j < N; j++) {
+        for (int j = 0; j < N; j++) {
           int index = i * N + j;
+          
+          if (matrixChecked[index]) {
+            continue;
+          }
+
+          matrixChecked[index] = true;
+
           int type = matrix[index]->getName();
           
-          matrixChecked[index] = true;
           // Indices calculados para luego revisarlos :D
           // En orden son Arriba, Abajo, Izquierda, Derecha
-          int neighbours[4] = {(M*N + (i-1) * N) % (M*N) + j - 1,
-            ((i+1) * N) % M*N + j - 1,
-            i * N + (N + j - 1)%N,
-            i * N + (j + 1) % N};
+          int neighbours[4] = {
+            ((i - 1 + M) % M) * N + j,
+            ((i + 1) % M) * N + j,
+            i * N + ((N + j - 1) % N),
+            i * N + ((j + 1) % N)};
+
           // Muerte por hambre o vejez
-          if (matrix[index]->step() and type != 0) {
+          if (!matrix[index]->step() and type != 0) {
             delete matrix[index];
             matrix[index] = new Cell();
+            type = 0;
+            switch (type) {
+              case 1: {
+                totalPrey--;
+                break; 
+              }
+              default: {
+                totalPredator++;
+                break;
+              }
+            }
           }
+
           switch (type) {
             // Logica de presa
-            case 1:
-              // Revisar si se puede mover
-              int libres = 0;
+            case 1: {
+              // Revisar si se puede mover y si puede tener coito :D
+              int empty = 0;
+              int emptyNeighbours[4];
+
+              bool thereIsCouple = false;
               for (int neighbour: neighbours) {
-                if (matrix[neighbour]->getName() == 0) {
-                  libres++;
+                switch (matrix[neighbour]->getName()) {
+                  case 0:
+                    emptyNeighbours[empty] = neighbour; 
+                    empty++;
+                    break;
+                  case 1:
+                    thereIsCouple = true;
+                    break;
+                  default:
+                    break;
                 }
               }
 
+              if (empty > 0) {
+                int chosenIndex = emptyNeighbours[rand() % empty];
+                delete matrix[chosenIndex];
+                matrix[chosenIndex] = matrix[index];
+                matrixChecked[chosenIndex] = true;
+                if (thereIsCouple &&  matrix[index]->canBreed()) {
+                  matrix[index] = new Prey();
+                  totalPrey++;
+                } else {
+                  matrix[index] = new Cell();
+                }
+              }
               break;
+            }
             // Logica de cazador
-            case 2:
+            case 2: {
+              // Revisar si se puede mover y si puede tener coito :D
+              int empty = 0;
+              int emptyNeighbours[4];
+
+              bool thereIsCouple = false;
+              int food = 0;
+              int foodNeighbours[4];
+              for (int neighbour: neighbours) {
+                switch (matrix[neighbour]->getName()) {
+                  case 0:
+                    emptyNeighbours[empty] = neighbour; 
+                    empty++;
+                    break;
+                  case 1:
+                    foodNeighbours[food] = neighbour;
+                    food++;
+                    break;
+                  default:
+                    thereIsCouple = true;
+                    break;
+                }
+              }
+              
+              if (food + empty > 0) {
+                int chosenIndex;
+                if (food > 0) {
+                  chosenIndex = foodNeighbours[rand()%food];
+                  totalPrey--;
+                } else {
+                  thereIsCouple = false;
+                  chosenIndex = emptyNeighbours[rand()%empty];
+                }
+                delete matrix[chosenIndex];
+                matrix[chosenIndex] = matrix[index];
+                matrixChecked[chosenIndex] = true;
+                if (thereIsCouple &&  matrix[index]->canBreed()) {
+                  matrix[index] = new Predator();
+                  totalPredator++;
+                } else {
+                  matrix[index] = new Cell();
+                }
+              }
               break;
+            }
             // Celda vacia
-            default:
+            default: {
               break;
+            }
           }
         }
       }
+      delete[] matrixChecked;
     }
 };
 
 int main() {
-  Grid grid = Grid();
-  grid.print();
-  grid.clean();
   return 0;
 }
