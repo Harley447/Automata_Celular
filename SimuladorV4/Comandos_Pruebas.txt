@@ -1,0 +1,20 @@
+//Se ejecuta las pruebas una por una, y la bandera --headless es 
+para no mostrar la simulación de manera gráfica, si desea reporducir
+la simulación en 2D, correr las pruebas sin --headless.
+
+.\simulacion.exe --semilla 42 --exp_id caso_base_s42 --headless
+.\simulacion.exe --semilla 100 --exp_id caso_base_s100 --headless
+.\simulacion.exe --semilla 2026 --exp_id caso_base_s2026 --headless
+
+.\simulacion.exe --semilla 42 --umbral_dep 5 --exp_id barrido_ud5 --headless
+.\simulacion.exe --semilla 42 --umbral_dep 10 --exp_id barrido_ud10 --headless
+.\simulacion.exe --semilla 42 --umbral_dep 15 --exp_id barrido_ud15 --headless
+.\simulacion.exe --semilla 42 --umbral_dep 20 --exp_id barrido_ud20 --headless
+.\simulacion.exe --semilla 42 --umbral_dep 25 --exp_id barrido_ud25 --headless
+
+
+.\simulacion.exe --semilla 42 --vecindario von_neumann --exp_id vecindario_von --headless
+.\simulacion.exe --semilla 42 --vecindario moore --exp_id vecindario_moore --headless
+
+.\simulacion.exe --semilla 42 --prob_presa 0.1 --exp_id regla_presa_baja --headless
+.\simulacion.exe --semilla 42 --prob_presa 0.8 --exp_id regla_presa_alta --headless
