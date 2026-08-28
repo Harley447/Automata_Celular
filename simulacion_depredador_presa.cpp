@@ -268,9 +268,18 @@ void guardarGraficaPNG(const std::vector<int>& gen,
                        const std::vector<int>& depredadores,
                        const std::string& nombreArchivo) {
     const int ancho = 800, alto = 600;
-    // Usar constructor en lugar de create
     sf::RenderTexture renderTexture(sf::Vector2u(ancho, alto));
     renderTexture.clear(sf::Color::White);
+
+    // Intentar cargar fuente
+    sf::Font fuente;
+    bool fuenteCargada = fuente.openFromFile("C:/Windows/Fonts/arial.ttf");
+    if (!fuenteCargada) {
+        fuenteCargada = fuente.openFromFile("C:/Windows/Fonts/calibri.ttf");
+    }
+    if (!fuenteCargada) {
+        std::cerr << "No se pudo cargar una fuente, se omiten textos.\n";
+    }
 
     // Ejes
     sf::VertexArray ejeX(sf::PrimitiveType::Lines, 2);
@@ -288,6 +297,39 @@ void guardarGraficaPNG(const std::vector<int>& gen,
     renderTexture.draw(ejeX);
     renderTexture.draw(ejeY);
 
+    if (fuenteCargada) {
+        // Titulo
+        sf::Text titulo(fuente, "Poblacion de Presas y Depredadores", 24);
+        titulo.setFillColor(sf::Color::Black);
+        titulo.setPosition(sf::Vector2f(ancho / 2.0f - titulo.getLocalBounds().size.x / 2.0f, 10));
+        renderTexture.draw(titulo);
+
+        // Etiqueta eje X
+        sf::Text etiquetaX(fuente, "Generacion", 16);
+        etiquetaX.setFillColor(sf::Color::Black);
+        etiquetaX.setPosition(sf::Vector2f(ancho / 2.0f - etiquetaX.getLocalBounds().size.x / 2.0f, alto - 30));
+        renderTexture.draw(etiquetaX);
+
+        // Etiqueta eje Y (rotada)
+        sf::Text etiquetaY(fuente, "Poblacion", 16);
+        etiquetaY.setFillColor(sf::Color::Black);
+        etiquetaY.setRotation(sf::degrees(-90));  // <-- corrección
+        etiquetaY.setPosition(sf::Vector2f(10, alto / 2.0f + etiquetaY.getLocalBounds().size.y / 2.0f));
+        renderTexture.draw(etiquetaY);
+
+        // Leyenda
+        sf::Text leyendaPresas(fuente, "Presas", 14);
+        leyendaPresas.setFillColor(sf::Color::Green);
+        leyendaPresas.setPosition(sf::Vector2f(ancho - 120, 50));
+        renderTexture.draw(leyendaPresas);
+
+        sf::Text leyendaDepred(fuente, "Depredadores", 14);
+        leyendaDepred.setFillColor(sf::Color::Red);
+        leyendaDepred.setPosition(sf::Vector2f(ancho - 120, 70));
+        renderTexture.draw(leyendaDepred);
+    }
+
+    // Dibujar curvas
     if (!gen.empty()) {
         int maxPob = *std::max_element(presas.begin(), presas.end());
         maxPob = std::max(maxPob, *std::max_element(depredadores.begin(), depredadores.end()));
@@ -378,6 +420,10 @@ int main() {
     auto tiempoPorGeneracion = milliseconds(1000 / GENERACIONES_POR_SEGUNDO);
 
     while (corriendo && generacion < T) {
+        if (generacion==1000) {
+            corriendo=false;
+            //Generacion = Limite superior de la simulacion
+        }
         auto inicio = steady_clock::now();
 
         if (VISUALIZAR) {
@@ -467,7 +513,7 @@ int main() {
         historialPresas.push_back(p);
         historialDepredadores.push_back(d);
 
-        if (generacion % 50 == 0) {
+        if (generacion % 10 == 0) {
             std::cout << "Gen " << generacion << " | Presas: " << p
                       << " | Depredadores: " << d << "\n";
         }
